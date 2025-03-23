@@ -30,6 +30,25 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    public String extractEmail(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(secret)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
+
+
+    public String generateVerificationToken(String email) {
+        return Jwts.builder()
+                .setSubject(email)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 900_000) )
+                .signWith(SignatureAlgorithm.HS512,secret)
+                .compact();
+    }
+
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
     }

@@ -23,14 +23,24 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false)
     private Long id;
-    @Column(unique = true)
-    private String email;  // Здесь будет поле email
+    @Column(unique = true, nullable = false, updatable = false)
+    private String email;
 
     private String login;
 
+    @Column(nullable = false, unique = true)
+    private String tag;
+
+    private String avatar_url;
+
+    @Column(nullable = false)
+    private Boolean isSubscribed;
+
+    @Column(nullable = false)
     private String password;
 
     private String role;
+    private Boolean isEnabled;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -64,6 +74,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return isEnabled;
     }
 }

@@ -4,43 +4,29 @@ import com.kaivix.authservice.config.JwtTokenProvider;
 import com.kaivix.authservice.config.SecurityConfig;
 import com.kaivix.authservice.model.User;
 import com.kaivix.authservice.repository.UserRepository;
+import com.kaivix.authservice.service.EmailService;
 import com.kaivix.authservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 @RestController
 @RequestMapping("/auth")
 
 @Slf4j
+@RequiredArgsConstructor()
 public class AuthController {
-    @Autowired
-    public AuthController(JwtTokenProvider jwtTokenProvider, AuthenticationManagerBuilder authenticationManagerBuilder, AuthenticationManager authenticationManager
-    , UserService userService, UserRepository userRepository, SecurityConfig securityConfig) {
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.authenticationManagerBuilder = authenticationManagerBuilder;
-        this.authenticationManager = authenticationManager;
-        this.userService = userService;
-        this.userRepository = userRepository;
-        this.securityConfig = securityConfig;
-    }
 
     private JwtTokenProvider jwtTokenProvider;
-    private AuthenticationManagerBuilder authenticationManagerBuilder;
-    private AuthenticationManager authenticationManager;
     private UserService userService;
     private UserRepository userRepository;
     private SecurityConfig securityConfig;
+    private EmailService emailService;
 
 
     @PostMapping("/login")
@@ -67,10 +53,33 @@ public class AuthController {
                 .build();
 
         userRepository.save(newUser);
+
         log.info("User created: {}", newUser);
     }
 
+    @GetMapping("/confirm")
+    public ResponseEntity<String> confirm(@RequestParam("token") String token) {
+        if (!jwtTokenProvider.validateToken(token)) {
+            return ResponseEntity.badRequest().body("Invalid token");
+        }
+        String email = jwtTokenProvider.getUsernameFromToken(token);
+        User user = userService.getUserByEmail(email);
+        user.setIsEnabled(true);
+        emailService.sendVerificationToken(user.getEmail());
+
+        return ResponseEntity.ok("Account is verified");
+    }
+
 }
+
+
+
+
+
+
+
+
+
 
 
 @RequiredArgsConstructor
